@@ -1,7 +1,7 @@
 import os
 from typing import Tuple
 from pyspark.sql import SparkSession
-from pyspark.sql.types import StructType, StructField, StringType
+from pyspark.sql.types import StructType, StructField, StringType, DateType
 from pyspark.sql.functions import lit
 from pyspark.sql.functions import col
 from pyspark.sql.types import ArrayType, DoubleType, IntegerType
@@ -31,7 +31,12 @@ def uploadRDDtoMongo(df, spark):
         StructField("price", DoubleType()),
         StructField("size", DoubleType()),
         StructField("rooms", IntegerType()),
-        StructField("bedrooms", IntegerType())
+        StructField("bedrooms", IntegerType()),
+        StructField("latitude", DoubleType()),
+        StructField("longitude", DoubleType()),
+        StructField("operation", StringType()),
+        StructField("propertyType", StringType()),
+        StructField("floor", IntegerType()),
     ]))
 
     df = df.select(col("Neighborhood"),
@@ -170,9 +175,9 @@ def remove_duplicate_properties_idealista(rdd_in):
     '''
 
     rdd_out = rdd_in \
-        .map(lambda x: (x[1][0], (x[0], x[1][1], x[1][2], x[1][3], x[1][4], x[1][5], x[1][6]))) \
+        .map(lambda x: (x[1][0], (x[0], x[1][1], x[1][2], x[1][3], x[1][4], x[1][5], x[1][6], x[1][7], x[1][8], x[1][9], x[1][10], x[1][11]))) \
         .reduceByKey(maxdate) \
-        .map(lambda x: (x[1][0], (x[1][1], x[1][3], x[1][4], x[1][5], x[1][6]))) \
+        .map(lambda x: (x[1][0], (x[1][1], x[1][3], x[1][4], x[1][5], x[1][6], x[1][7], x[1][8], x[1][9], x[1][10], x[1][11]))) \
         .cache()
 
     return rdd_out
@@ -186,10 +191,11 @@ def transform_idealista(rdd_in, lookup_rent_neighborhood_RDD):
 
     transform_rdd = rdd_in \
         .filter (lambda x: x['province'] == 'Barcelona') \
-        .map(lambda x: (x['neighborhood'], (x['propertyCode'], x['date'], x['district'], x['price'], x['size'], x['rooms'], x['bathrooms']))) \
+        .map(lambda x: (x['neighborhood'], (x['propertyCode'], x['date'], x['district'], x['price'], x['size'], x['rooms'], x['bathrooms'], x['latitude'], x['longitude'], x['operation'], x['propertyType'], x['floor']))) \
         .join(lookup_rent_neighborhood_RDD) \
         .map(unroll) \
         .cache()
+
 
     return transform_rdd
 
@@ -228,7 +234,6 @@ def generateIdealistaRDD(directory, lookup_rent_neighborhood_RDD, spark):
     return rdd_idealista_1
 
 
-
 def main():
 
     spark = SparkSession \
@@ -265,7 +270,7 @@ def main():
     # print(rdd_all.count())
 
     df = rdd_all \
-         .map(lambda x: (x[0], x[1][1][0], x[1][1][1], x[1][1][2], x[1][1][3], x[1][1][4], x[1][1][5], x[1][1][6], x[1][1][7], x[1][1][8], x[1][0])) \
+        .map(lambda x: (x[0], x[1][1][0], x[1][1][1], x[1][1][2], x[1][1][3], x[1][1][4], x[1][1][5], x[1][1][6], x[1][1][7], x[1][1][8], x[1][0])) \
         .toDF(['Neighborhood', 'District', 'RFD most recent', 'RFD Increased', 'Population recent', 'Population Increase', 'Surface Price (€/m2)', 'Monthly Price (€/month)', 'Surface Price Increase', 'Monthly Price Increase', 'Info Idealista'])
 
     uploadRDDtoMongo(df, spark)
