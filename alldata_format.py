@@ -27,6 +27,7 @@ def uploadRDDtoMongo(df, spark):
     '''
 
     struct_schema = ArrayType(StructType([
+        StructField("propertyCode", IntegerType()),
         StructField("date", StringType()),
         StructField("price", DoubleType()),
         StructField("size", DoubleType()),
@@ -177,7 +178,7 @@ def remove_duplicate_properties_idealista(rdd_in):
     rdd_out = rdd_in \
         .map(lambda x: (x[1][0], (x[0], x[1][1], x[1][2], x[1][3], x[1][4], x[1][5], x[1][6], x[1][7], x[1][8], x[1][9], x[1][10], x[1][11]))) \
         .reduceByKey(maxdate) \
-        .map(lambda x: (x[1][0], (x[1][1], x[1][3], x[1][4], x[1][5], x[1][6], x[1][7], x[1][8], x[1][9], x[1][10], x[1][11]))) \
+        .map(lambda x: (x[1][0], (x[0], x[1][1], x[1][3], x[1][4], x[1][5], x[1][6], x[1][7], x[1][8], x[1][9], x[1][10], x[1][11]))) \
         .cache()
 
     return rdd_out
