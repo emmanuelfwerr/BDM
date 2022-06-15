@@ -296,9 +296,8 @@ def RDDIntegration():
     # print(rdd_all.count())
 
     df_all = rdd_all \
-        .map(lambda x: (x[0], x[1][1][0], str(x[1][1][1]), x[1][1][2], str(x[1][1][3]), x[1][0][0], x[1][0][1], x[1][0][2], x[1][0][3], x[1][0][4], x[1][0][5], x[1][0][6], x[1][0][7], x[1][0][8], x[1][0][9], x[1][0][10], x[1][1][4], x[1][1][5], x[1][1][6], x[1][1][7], x[1][1][9], x[1][1][8], x[1][1][10], x[1][1][11])) \
+        .map(lambda x: (x[0], x[1][1][0], str(x[1][1][1]), x[1][1][2], str(x[1][1][3]), x[1][0][0], x[1][0][1], x[1][0][2], x[1][0][3], x[1][0][4], x[1][0][5], x[1][0][6], x[1][0][7], x[1][0][8], x[1][0][9], x[1][0][10], x[1][1][4], x[1][1][5], x[1][1][6], x[1][1][7], x[1][1][8], x[1][1][10], x[1][1][9], x[1][1][11])) \
         .toDF(['Neighborhood', 'Neighborhood Id','Neighborhood Code', 'District Name', 'District Code','Property Code', 'Date', 'Price','Size','Rooms','Bathrooms', 'Latitude', 'Longitude', 'Operation', 'PropertyType', 'Floor','RFD', 'Increased RFD', 'POP', 'Increased POP', 'Surface Price (€/m2)', 'Surface Price Increase', 'Monthly Price (€/month)', 'Monthly Price Increase'])
-
     df_all_nested = rdd_all_nested \
         .map(lambda x: (x[0], str(x[1][1][0]), x[1][1][1], str(x[1][1][2]), x[1][1][3], x[1][1][4], x[1][1][5], x[1][1][6], x[1][1][7], x[1][1][8], x[1][1][9], x[1][1][10], x[1][1][11], x[1][0])) \
         .toDF(['Neighborhood', 'Neighborhood Id', 'Neighborhood Code', 'District', 'District Code', 'RFD most recent', 'RFD Increased', 'Population recent', 'Population Increase', 'Surface Price (€/m2)', 'Monthly Price (€/month)', 'Surface Price Increase', 'Monthly Price Increase', 'Info Idealista'])
