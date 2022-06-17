@@ -174,7 +174,6 @@ def generatePreuRDD(preuRDD, lookup_income_neighborhood_RDD):
         .cache()
 
     #generating the last rdd
-
     lookup = lookup_income_neighborhood_RDD.map(lambda x: (x[0], x[1][0]))
     rdd = rdd2_join2 \
         .map(lambda x: (x[0], (x[1][0][0], x[1][0][2], x[1][0][1], x[1][0][4], x[1][0][5], float("{:.2f}".format(x[1][0][4]-x[1][1][4])), float("{:.2f}".format(x[1][0][5]-x[1][1][5]))))) \
