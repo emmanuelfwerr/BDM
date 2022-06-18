@@ -1,8 +1,9 @@
 #from alldata_format import RDDIntegration
 from KPI_exploit import generateKPIs
-#import streaming_spark
+from streaming_spark import streaming_prediction
 
 if __name__ == '__main__':
     #RDDIntegration()
     generateKPIs()
     #streaming_spark()
+    #streaming_prediction()
