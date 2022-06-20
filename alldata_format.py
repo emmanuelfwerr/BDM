@@ -2,8 +2,7 @@ import os
 from typing import Tuple
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, StringType, DateType
-from pyspark.sql.functions import lit
-from pyspark.sql.functions import col
+from pyspark.sql.functions import lit, col
 from pyspark.sql.types import ArrayType, DoubleType, IntegerType
 
 
