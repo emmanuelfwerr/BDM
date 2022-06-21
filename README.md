@@ -27,9 +27,6 @@ There are many more dependencies that must be installed. You must create an envi
 - `visualize.py` - Import all data from Exploitation Zone and create simple KPI dashboard in localhost using Dash and Plotly
 - `test_visuals.ipynb` - Testing KPI visualizations in Jupyter Notebook
 - `run.sh` - shell script to run all P2 files in correct sequence and produce KPI hasboard in localhost
-- `opendata_collect.py` - Check if Temporal Landing is up to date... if not, collect necessary data from OpenDataBCN (P1)
-- `opendata_persist.py` - Export all OpenDataBCN data from Temporal Landining to Persistent Landing (P1)
-- `update_landing.sh` - shell script to run all P1 files in correct sequence
 - `bdm_env.yml` - environment yaml file
 
 ### Instructions to Run
@@ -40,5 +37,3 @@ There are many more dependencies that must be installed. You must create an envi
     * This will run each of the scripts in each zone sequentially thus completing flow of data from source to final tables
 * `visualize.py` will remain running until Keyboard Interrupt
     * Access http://127.0.0.1:8050/ from your browser to view KPI dashboard
-
-**Ignore `update_landing.sh`!** ...although it is fully operational and pretty cool, it is part of P1 of this project and unnecessary to run in P2. Feel free to take a look inside though!
