@@ -35,10 +35,22 @@ def loadMongoDF(db, collection):
     return dataDF, spark
 
 kpi1DF, spark = loadMongoDF(db='exploitation', collection='kpi1')
+
+kpi2DF, spark = loadMongoDF(db='exploitation', collection='kpi2')
         
-df = kpi1DF.toPandas()
+kpi2_df = kpi2DF.toPandas()
+kpi1_df = kpi1DF.toPandas()
+kpi1_df.sort_values('average_price', ascending=True, inplace=True)
 
 app = Dash(__name__)
+
+kpi1_fig = px.bar(kpi1_df, x="neighborhood", y="average_price", text_auto='.2s', title="Average Listing Price per Neighborhood")
+kpi1_fig.update_traces(textfont_size=12, textangle=0, textposition="outside", cliponaxis=False)
+kpi1_fig.update_layout(barmode='group', xaxis_tickangle=-45)
+
+kpi1_fig2 = px.bar(kpi1_df, x="neighborhood", y="n_listings", text_auto='.2s', title="Total Available Listings per Neighborhood")
+kpi1_fig2.update_traces(textfont_size=12, textangle=0, textposition="outside", cliponaxis=False)
+kpi1_fig2.update_layout(barmode='group', xaxis_tickangle=-45)
 
 app.layout = html.Div([
     #html.H4(children=''), # Some text
@@ -48,8 +60,8 @@ app.layout = html.Div([
             "Select first variable to plot (x-axis):",
             dcc.Dropdown(
             # Only show numeric columns
-                df._get_numeric_data().columns.values.tolist(),
-                df._get_numeric_data().columns.values.tolist()[1],
+                kpi2_df._get_numeric_data().columns.values.tolist(),
+                kpi2_df._get_numeric_data().columns.values.tolist()[0],
                 id='xaxis-column'
             )
         ], style={'width': '48%', 'display': 'inline-block'}),
@@ -59,8 +71,8 @@ app.layout = html.Div([
             "Select second variable to plot (y-axis):",
             dcc.Dropdown(
             # Only show numeric columns
-                df._get_numeric_data().columns.values.tolist(),
-                df._get_numeric_data().columns.values.tolist()[1],
+                kpi2_df._get_numeric_data().columns.values.tolist(),
+                kpi2_df._get_numeric_data().columns.values.tolist()[1],
                 id='yaxis-column'
             )
         ], style={'width': '48%', 'float': 'right', 'display': 'inline-block'}),
@@ -68,8 +80,18 @@ app.layout = html.Div([
     # Correlation
     html.Div(id="number-output"),
     
-    # Graph
-    dcc.Graph(id='indicator-graphic')
+    # kpi2 Graph
+    dcc.Graph(id='indicator-graphic'),
+
+    # kpi1 Graph
+    dcc.Graph(
+        id='kpi1_price-graph',
+        figure=kpi1_fig),
+
+    # kpi1 Graph2
+    dcc.Graph(
+        id='kpi1_listings-graph',
+        figure=kpi1_fig2)
 ])
 
 @app.callback(
@@ -81,10 +103,10 @@ app.layout = html.Div([
 def update_graph(xaxis_column_name, yaxis_column_name):
     #dff = df[df['Year'] == year_value]
 
-    fig = px.scatter(x=df.loc[:,xaxis_column_name],
-                     y=df.loc[:,yaxis_column_name],
+    fig = px.scatter(x=kpi2_df.loc[:,xaxis_column_name],
+                     y=kpi2_df.loc[:,yaxis_column_name],
                      title = u'Correlation between {} and {} is: {}'.format(xaxis_column_name,
-                             yaxis_column_name, round(df[xaxis_column_name].corr(df[yaxis_column_name]), 3)),
+                             yaxis_column_name, round(kpi2_df[xaxis_column_name].corr(kpi2_df[yaxis_column_name]), 3)),
                      width=800, height=500
                      #hover_name=dff[dff['Indicator Name'] == yaxis_column_name]['Country Name']
                      )
