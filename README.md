@@ -14,8 +14,7 @@ This project requires **Python 3.9** and the following Python libraries installe
 - [dash](https://dash.plotly.com)
 - [plotly](https://dash.plotly.com)
 
-There are many more dependencies that must be installed. You must create an environment using the provided yaml file:
-- [bdm_env.yml](https://github.com/emmanuelfwerr/BDM)
+There are many more dependencies that must be installed. You must create an environment using the provided yaml file `bdm_env.yml`
 
 ### Index
 
@@ -26,6 +25,12 @@ There are many more dependencies that must be installed. You must create an envi
 - `KPI_exploit.py`
 - `streaming_spark.py`
 - `visualize.py`
+- `test_visuals.ipynb`
+- `run.sh`
+- `opendata_collect.py`
+- `opendata_persist.py`
+- `update_landing.sh`
+- `bdm_env.yml`
 
 ### Instructions to Run
 
@@ -34,4 +39,4 @@ There are many more dependencies that must be installed. You must create an envi
 * Open your terminal, go to project main directory, and run shell file `run.sh`
     * This will run each of the scripts in each zone sequentially thus completing flow of data from source to final tables
 
-**Ignore `update_landing.sh`!** ...although it is fully operational and pretty cool, it is part of P1 of this project and unnecessary to the flow of data in P2
+**Ignore `update_landing.sh`!** ...although it is fully operational and pretty cool, it is part of P1 of this project and unnecessary to run in P2. Feel free to take a look inside though!
