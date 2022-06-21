@@ -10,6 +10,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/landing/temporal/opendatabcn-lloguer_preu/2014_lloguer_preu_bcn.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
       </map>
     </option>
   </component>

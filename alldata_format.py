@@ -45,13 +45,9 @@ def uploadRDDtoMongo(df_nested, df, spark):
                    col("District"),
                    col("District Code"),
                    col("RFD most recent"),
-                   col("RFD Increased"),
                    col("Population recent"),
-                   col("Population Increase"),
                    col("Surface Price (€/m2)"),
                    col("Monthly Price (€/month)"),
-                   col("Surface Price Increase"),
-                   col("Monthly Price Increase"),
                    col("Info Idealista")
                    .cast(struct_schema))
 
@@ -74,15 +70,6 @@ def mostrecent(x, var):
     '''
     x.sort(reverse=True, key=lambda x: x['year'])
     return x[0][var]
-
-
-def increase(x, var):
-    '''
-    it returns the increase difference of the var between the most recent one and the second most previous one
-    '''
-    x.sort(reverse=True, key=lambda x: x['year'])
-    diff = x[0][var] - x[1][var] #difference between the var of the last year and the year before
-    return float("{:.2f}".format(diff))
 
 
 def unroll(x: Tuple[str, Tuple[float, str]]):
@@ -108,16 +95,16 @@ def generateIncomeRDD(incomeRDD, lookup_income_neighborhood_RDD):
     """
     RDD generated has the following structure:
     - Key: neighborhood
-    - Values: neighborhood_id, district_name, last year of RFD (family income index), last year of population, increase of RFD, increase od population
+    - Values: neighborhood_id, district_name, last year of RFD (family income index), last year of population
     """
     rdd = incomeRDD \
-        .map(lambda x: (x['neigh_name '], (x['district_name'], float(mostrecent(x['info'], 'RFD')), increase(x['info'], 'RFD'), float(mostrecent(x['info'], 'pop')), increase(x['info'], 'pop')))) \
+        .map(lambda x: (x['neigh_name '], (x['district_name'], float(mostrecent(x['info'], 'RFD')), float(mostrecent(x['info'], 'pop'))))) \
         .join(lookup_income_neighborhood_RDD) \
         .distinct() \
         .map(unroll) \
         .cache()
 
-    rdd_income = rdd.map(lambda x: (x[0][0], (x[0][1], x[1][0], x[1][1], x[1][2], x[1][3], x[1][4])))
+    rdd_income = rdd.map(lambda x: (x[0][0], (x[0][1], x[1][0], x[1][1], x[1][2])))
 
     return rdd_income
 
@@ -175,12 +162,12 @@ def generatePreuRDD(preuRDD, lookup_income_neighborhood_RDD):
     #generating the last rdd
     lookup = lookup_income_neighborhood_RDD.map(lambda x: (x[0], x[1][0]))
     rdd = rdd2_join2 \
-        .map(lambda x: (x[0], (x[1][0][0], x[1][0][2], x[1][0][1], x[1][0][4], x[1][0][5], float("{:.2f}".format(x[1][0][4]-x[1][1][4])), float("{:.2f}".format(x[1][0][5]-x[1][1][5]))))) \
+        .map(lambda x: (x[0], (x[1][0][0], x[1][0][2], x[1][0][1], x[1][0][4], x[1][0][5]))) \
         .join(lookup) \
         .map(unroll) \
         .cache()
     # key: neigh
-    # values: neigh_code, district, district_code, price €/m2, price €/month, increased price m2, increased monthly price
+    # values: neigh_code, district, district_code, price €/m2, price €/month
     return rdd
 
 
@@ -263,8 +250,12 @@ def RDDIntegration():
     lookup_income_neighborhood_RDD = loadMongoRDD(collections[2], spark).map(lambda x: (x['neighborhood'], (x['neighborhood_reconciled'], x['_id']))).cache()
     lookup_rent_neighborhood_RDD = loadMongoRDD(collections[3], spark).map(lambda x: (x['ne'], x['ne_re'])).cache()
 
+    #Key: neighborhood
+    #Values: neighborhood_id, district_name, last year of RFD (family income index), last year of population
     rdd1 = generateIncomeRDD(incomeRDD, lookup_income_neighborhood_RDD)
 
+    # key: neigh
+    # values: neigh_code, district, district_code, price €/m2, price €/month
     rdd2 = generatePreuRDD(preuRDD, lookup_income_neighborhood_RDD)
 
     # RDD1 --> district_name, last year of RFD (family income index), last year of population, increase of RFD, increase of population
@@ -272,11 +263,9 @@ def RDDIntegration():
 
     rdd3 = rdd1 \
         .join(rdd2) \
-        .map(lambda x: (x[0], (x[1][0][0], x[1][1][0], x[1][0][1], x[1][1][2], x[1][0][2], x[1][0][3], x[1][0][4], x[1][0][5], x[1][1][3], x[1][1][4], x[1][1][5], x[1][1][6]))) \
+        .map(lambda x: (x[0], (x[1][0][0], x[1][1][0], x[1][0][1], x[1][1][2], x[1][0][2], x[1][0][3], x[1][1][3], x[1][1][4]))) \
         .cache()
-
-    # RDD3 --> neigh_name (key), neigh_id, neigh_code, district_name, district_code, RFD last year, POP last year, RFD increased, POP increased, price €/m2, price €/month, increased price m2, increased monthly price
-
+    # RDD3 --> neigh_name (key), neigh_id, neigh_code, district_name, district_code, RFD last year, POP last year, price €/m2, price €/month
 
     directory = "landing/persistent/idealista"
     rdd_idealista, rdd_idealista_list = generateIdealistaRDD(directory, lookup_rent_neighborhood_RDD, spark)
@@ -287,17 +276,13 @@ def RDDIntegration():
     rdd_all_nested = rdd_idealista_list.join(rdd3)
     print(rdd_all_nested.count())
 
-
-    # print('####################')
-    # print('****** RDD ******')
-    # rdd_all.foreach(lambda r: print(r))
-    # print(rdd_all.count())
-
     df_all = rdd_all \
-        .map(lambda x: (x[0], x[1][1][0], str(x[1][1][1]), x[1][1][2], str(x[1][1][3]), x[1][0][0], x[1][0][1], x[1][0][2], x[1][0][3], x[1][0][4], x[1][0][5], x[1][0][6], x[1][0][7], x[1][0][8], x[1][0][9], x[1][0][10], x[1][1][4], x[1][1][5], x[1][1][6], x[1][1][7], x[1][1][8], x[1][1][10], x[1][1][9], x[1][1][11])) \
-        .toDF(['Neighborhood', 'Neighborhood Id','Neighborhood Code', 'District Name', 'District Code','Property Code', 'Date', 'Price','Size','Rooms','Bathrooms', 'Latitude', 'Longitude', 'Operation', 'PropertyType', 'Floor','RFD', 'Increased RFD', 'POP', 'Increased POP', 'Surface Price (€/m2)', 'Surface Price Increase', 'Monthly Price (€/month)', 'Monthly Price Increase'])
+        .map(lambda x: (x[0], x[1][1][0], str(x[1][1][1]), x[1][1][2], str(x[1][1][3]), x[1][0][0], x[1][0][1], x[1][0][2], x[1][0][3], x[1][0][4], x[1][0][5], x[1][0][6], x[1][0][7], x[1][0][8], x[1][0][9], x[1][0][10], x[1][1][4], x[1][1][5], x[1][1][6], x[1][1][7])) \
+        .toDF(['Neighborhood', 'Neighborhood Id','Neighborhood Code', 'District Name', 'District Code','Property Code', 'Date', 'Price','Size','Rooms','Bathrooms', 'Latitude', 'Longitude', 'Operation', 'PropertyType', 'Floor','RFD', 'POP', 'Surface Price (€/m2)', 'Monthly Price (€/month)'])
     df_all_nested = rdd_all_nested \
-        .map(lambda x: (x[0], str(x[1][1][0]), x[1][1][1], str(x[1][1][2]), x[1][1][3], x[1][1][4], x[1][1][5], x[1][1][6], x[1][1][7], x[1][1][8], x[1][1][9], x[1][1][10], x[1][1][11], x[1][0])) \
-        .toDF(['Neighborhood', 'Neighborhood Id', 'Neighborhood Code', 'District', 'District Code', 'RFD most recent', 'RFD Increased', 'Population recent', 'Population Increase', 'Surface Price (€/m2)', 'Monthly Price (€/month)', 'Surface Price Increase', 'Monthly Price Increase', 'Info Idealista'])
+        .map(lambda x: (x[0], str(x[1][1][0]), x[1][1][1], str(x[1][1][2]), x[1][1][3], x[1][1][4], x[1][1][5], x[1][1][6], x[1][1][7], x[1][0])) \
+        .toDF(['Neighborhood', 'Neighborhood Id', 'Neighborhood Code', 'District', 'District Code', 'RFD most recent', 'Population recent', 'Surface Price (€/m2)', 'Monthly Price (€/month)', 'Info Idealista'])
 
     uploadRDDtoMongo(df_all_nested, df_all, spark)
+
+RDDIntegration()

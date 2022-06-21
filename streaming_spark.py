@@ -3,7 +3,7 @@ from pyspark.ml.pipeline import PipelineModel
 from pyspark.sql.functions import *
 
 
-def streaming_prediction():
+def streaming_prediction(val):
     spark = SparkSession \
         .builder \
         .master(f"local[*]") \
@@ -21,17 +21,18 @@ def streaming_prediction():
         .load() \
         .selectExpr("CAST(value AS STRING)")
 
-    parsed_message = df.withColumn('Neighborhood_ID', split(df['value'], ',').getItem(1)) \
+    data = df.withColumn('Neighborhood_ID', split(df['value'], ',').getItem(1)) \
         .withColumn('Price', split(df['value'], ',').getItem(2)) \
         .select('Neighborhood_ID', 'Price')
-    parsed_message = parsed_message.withColumn('Price', parsed_message['Price'].cast('double'))
-    predict = pipeline.transform(parsed_message).select("Neighborhood_ID", "Price", "prediction")
+    data = data.withColumn('Price', data['Price'].cast('double'))
+    prediction = pipeline.transform(data).select("Neighborhood_ID", "Price", "prediction")
 
 
-    query = predict \
+    query = prediction \
         .writeStream \
         .format("console") \
         .start()
-    query.awaitTermination()
+    query.awaitTermination(timeout=val)
 
-streaming_prediction()
+val = int(input("Enter the number of seconds that you want to be receiving values by stream and displaying the prediction, e.g. 30: "))
+streaming_prediction(val)
